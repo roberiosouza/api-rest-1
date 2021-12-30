@@ -14,8 +14,15 @@ router.get('/', (req, res, next) =>{
 //Salva um pedido
 router.post('/', (req, res, next) => {
 
+    const order = {
+        id : req.body.id,
+        qtd : req.body.qtd
+
+    }
+
     res.status(201).send({
         mensagem : 'POST da rota de pedido',
+        orderCreated : order
     });
 
 });

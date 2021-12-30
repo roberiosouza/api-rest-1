@@ -13,8 +13,14 @@ router.get('/', (req, res, next) =>{
 //Salva um produto
 router.post('/', (req, res, next) => {
 
+    const product = {
+        name : req.body.name,
+        price : req.body.price
+    }
+
     res.status(201).send({
         mensagem : 'POST da rota de produtos',
+        productCreated : product
     });
 
 });
