@@ -1,11 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const mysql = require('../mysql').pool;
 
 //Retorna os produtos
 router.get('/', (req, res, next) =>{
 
-    res.status(200).send({
-        mensagem : 'GET da rota de produtos',
+    mysql.getConnection((error, conn) => {
+        if(error){ return console.error(error); res.status(500).send({ error: error });}
+
+        conn.query(
+            'select * from products',
+            (error, result, field) => {
+                conn.release();
+                if (error) { return console.error(error); res.status(500).send({ error: error }) } 
+
+                return res.status(200).send({response: result});
+            }
+        )
     });
 
 });
@@ -13,23 +24,47 @@ router.get('/', (req, res, next) =>{
 //Salva um produto
 router.post('/', (req, res, next) => {
 
-    const product = {
-        name : req.body.name,
-        price : req.body.price
-    }
 
-    res.status(201).send({
-        mensagem : 'POST da rota de produtos',
-        productCreated : product
+    mysql.getConnection((error, conn) => {
+        if (error) { return console.error(error); res.status(500).send({ error: error }) }
+        conn.query(
+            'insert into products (name, price) values (?,?)',
+            [req.body.name, req.body.price],
+            (error, result, field) => {
+                conn.release();
+
+                if (error) { return console.error(error); res.status(500).send({ error: error }) }
+          
+                return res.status(201).send({
+                    mensagem : 'Produto inserido com sucesso',
+                    id_product : result.insertId
+                });
+            }
+        )
     });
+
 
 });
 
 //Atualizar um produto
 router.patch('/', (req, res, next) => {
 
-    res.status(201).send({
-        mensagem : 'PATCH da rota de produtos',
+    mysql.getConnection((error, conn) => {
+        if(error) { return console.error(error); res.status(500).send({ error : error }); }
+        conn.query(
+            'update products set name=?, price=? where id=?;',
+            [req.body.name, req.body.price, req.body.id],
+
+            (error, result, field) => {
+                conn.release();
+
+                if(error) { return console.error(error); res.status(500).send({ error : error }); }
+
+                return res.status(202).send({
+                    mensagem : 'Produto alterado com sucesso.'
+                });
+            }
+        )
     });
 
 });
@@ -37,8 +72,24 @@ router.patch('/', (req, res, next) => {
 //Excluir um produto
 router.delete('/', (req, res, next) => {
 
-    res.status(201).send({
-        mensagem : 'DELETE da rota de produtos',
+    mysql.getConnection((error, conn) => {
+        if(error) { return console.error(error); res.status(500).send({ error : error }); }
+        conn.query(
+
+            'delete from products where id = ?;',
+            [req.body.id],
+
+            (error, result, field) => {
+                conn.release();
+
+                if(error){ return console.error(error); res.status(500).send({ error : error }); }
+                return res.status(202).send({
+                    mensagem : 'Produto excluido com sucesso.'
+                });
+            }
+
+        )
+
     });
 
 });
@@ -46,13 +97,21 @@ router.delete('/', (req, res, next) => {
 //Retorna um produto
 router.get('/:id', (req, res, next) => {
 
-    const id = req.params.id;
+    mysql.getConnection((error, conn) => {
+        if(error){ return console.error(error); res.status(500).send({error : error}); }
+        conn.query(
+            'select * from products where id = ?;',
+            [req.params.id],
+            (error, result, field)=>{
+                conn.release();
 
-    res.status(200).send({
-        mensagem : 'Rota com parametro',
-        id : id,
+                if(error){ return console.error(error); res.status(500).send({error : error});}
+
+                return res.status(200).send({response : result});
+            }
+
+        )
     });
-
 });
 
 module.exports = router;
