@@ -14,7 +14,23 @@ router.get('/', (req, res, next) =>{
                 conn.release();
                 if (error) { return console.error(error); res.status(500).send({ error: error }) } 
 
-                return res.status(200).send({response: result});
+                const response = {
+                    quantidade : result.length,
+                    products : result.map(prod => {
+                        return {
+                            id : prod.id,
+                            name : prod.name,
+                            price : prod.price,
+                            request : {
+                                type : 'GET',
+                                description : 'Retorna todos os produtos',
+                                url : 'http://localhost:3000/products/' + prod.id   
+                            }
+                        }
+                    })
+                }
+
+                return res.status(200).send({response});
             }
         )
     });
@@ -34,11 +50,22 @@ router.post('/', (req, res, next) => {
                 conn.release();
 
                 if (error) { return console.error(error); res.status(500).send({ error: error }) }
-          
-                return res.status(201).send({
+                
+                const response = {
                     mensagem : 'Produto inserido com sucesso',
-                    id_product : result.insertId
-                });
+                    productCreated : {
+                        id : result.id,
+                        name : req.body.name,
+                        price : req.body.price,
+                        request : {
+                            type : 'POST',
+                            description : 'Insere um produto',
+                            url : 'http://localhost:3000/products/'
+                        }
+                    }
+                }
+
+                return res.status(201).send({ response });
             }
         )
     });
@@ -60,9 +87,21 @@ router.patch('/', (req, res, next) => {
 
                 if(error) { return console.error(error); res.status(500).send({ error : error }); }
 
-                return res.status(202).send({
-                    mensagem : 'Produto alterado com sucesso.'
-                });
+                const response = {
+                    mensagem : 'Produto alterado com sucesso.',
+                    productAltered : {
+                        id : req.body.id,
+                        name : req.body.name,
+                        price : req.body.price,
+                        request : {
+                            type : 'PATCH',
+                            description : 'Altera os valores de um produto específico',
+                            url : 'http://localhost:3000/products/' + req.body.id
+                        }
+                    }
+                }
+
+                return res.status(202).send({ response });
             }
         )
     });
@@ -75,7 +114,6 @@ router.delete('/', (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if(error) { return console.error(error); res.status(500).send({ error : error }); }
         conn.query(
-
             'delete from products where id = ?;',
             [req.body.id],
 
@@ -83,9 +121,16 @@ router.delete('/', (req, res, next) => {
                 conn.release();
 
                 if(error){ return console.error(error); res.status(500).send({ error : error }); }
-                return res.status(202).send({
-                    mensagem : 'Produto excluido com sucesso.'
-                });
+
+                const response = {
+                    mensagem : 'Produto excluido com sucesso.',
+                    request : {
+                        type : 'DELETE',
+                        description : 'Exclui um produto específico',
+                        url : 'http://localhost:3000/products/' + req.body.id
+                    }
+                }
+                return res.status(202).send({ response });
             }
 
         )
@@ -107,7 +152,26 @@ router.get('/:id', (req, res, next) => {
 
                 if(error){ return console.error(error); res.status(500).send({error : error});}
 
-                return res.status(200).send({response : result});
+                if (result.length == 0) {
+                    return res.status(404).send({
+                        mensagem : 'Produto não encontrado com esse ID'
+                    });
+                }
+
+                const response = {
+                    product : {
+                        id : result[0].id,
+                        name : result[0].name,
+                        price : result[0].price,
+                        request : {
+                            type : 'GET',
+                            description : 'Retorna um produto específico',
+                            url : 'http://localhost:3000/products/' + result[0].id
+                        }
+                    }
+             }
+
+                return res.status(200).send({response});
             }
 
         )
