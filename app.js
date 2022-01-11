@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const routeProducts = require('./routes/products');
 const routeOrders = require('./routes/orders');
 
+app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.urlencoded({ extended : false }));
 app.use(bodyParser.json());
 
