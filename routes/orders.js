@@ -9,13 +9,17 @@ router.get('/', (req, res, next) =>{
         if(error) {return console.error(error); res.status(500).send({error : error});}
 
         conn.query(
-            'select * from orders',
+            `
+                select orders.id, orders.qtd,
+                products.id as products_id, products.name, products.price  
+                from orders
+                inner join products on (products.id=orders.products_id)
+            `,
             (error, result, field) => {
                 conn.release();
                 if(error) { return console.error(error); res.status(500).send({ error : error }); }
 
                 const response = {
-                    quantity : result.length,
                     request : {
                         type : 'GET',
                         description : 'Retorna todos os pedidos',
@@ -25,8 +29,12 @@ router.get('/', (req, res, next) =>{
                     orders : result.map(order => {
                         return {
                             id : order.id,
-                            products_id : order.products_id,
-                            qtd : order.qtd                            
+                            qtd : order.qtd,
+                            products : {
+                                product_id : order.products_id,
+                                name : order.name,
+                                price : order.price
+                            }                          
                         }
                     })                   
                 }
