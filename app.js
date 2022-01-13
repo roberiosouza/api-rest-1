@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 
 const routeProducts = require('./routes/products');
 const routeOrders = require('./routes/orders');
+const routeUser = require('./routes/users');
 
 app.use('/uploads', express.static('uploads'));
 app.use(bodyParser.urlencoded({ extended : false }));
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 
 app.use('/products', routeProducts);
 app.use('/orders', routeOrders);
+app.use('/users', routeUser);
 
 app.use((req, res, next) => {
     const erro = new Error('Não encontrado.');
