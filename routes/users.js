@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 router.post('/created', (req, res, next) => {
     mysql.getConnection((error, conn) => {
@@ -42,6 +43,48 @@ router.post('/created', (req, res, next) => {
             )
         });
     });
+});
+
+router.post('/login', (req, res, next) => {
+
+    mysql.getConnection((error, conn) => {
+        if (error) { return console.error(error); res.status(500).send({error : error}); }
+
+        const query = `select * from user where email = ?`;
+        conn.query(query, [req.body.email],
+            (error, result, field) => {
+                conn.release();
+                if (error) { return console.error(error); res.status(500).send({error : error}); }
+
+                if (result.length < 1) {
+                    return res.status(401).send({mensagem: 'Falha na autenticação.'});
+                }
+
+                bcrypt.compare(req.body.password.toString(), result[0].password, (error, results) => {
+                    if (error) { return console.error(error); res.status(401).send({mensagem : 'Falha na autenticação.'}); }
+
+                    if (results) {
+
+                        const token = jwt.sign(
+                            {
+                                id_user : result[0].id,
+                                email : result[0].email
+                            },
+                            process.env.JWT_KEY,
+                            {
+                                expiresIn : "1h"
+                            }
+                        );
+
+                        return res.status(200).send({mensagem:'Autenticado com sucesso.', token : token});
+                    }
+
+                    return res.status(401).send({mensagem: 'Falha na autenticação.'});
+                });
+
+            });
+    })
+
 });
 
 module.exports = router;
